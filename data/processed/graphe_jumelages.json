@@ -1,0 +1,35 @@
+{
+  "nodes": [
+    {
+      "id": "Q84",
+      "name": "London",
+      "lon": -0.12,
+      "lat": 51.51,
+      "country": "GB"
+    },
+    {
+      "id": "Q456",
+      "name": "Lyon",
+      "lon": 4.83,
+      "lat": 45.76,
+      "country": "FR"
+    },
+    {
+      "id": "Q90",
+      "name": "Paris",
+      "lon": 2.35,
+      "lat": 48.86,
+      "country": "FR"
+    }
+  ],
+  "links": [
+    {
+      "source": "Q456",
+      "target": "Q90"
+    },
+    {
+      "source": "Q84",
+      "target": "Q90"
+    }
+  ]
+}
