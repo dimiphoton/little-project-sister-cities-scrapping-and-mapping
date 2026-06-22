@@ -154,14 +154,22 @@ def fetch_batch(limit: int, offset: int, last_run: Optional[str]) -> List[dict]:
     raise RuntimeError(f"Echec SPARQL apres {MAX_RETRIES} essais (offset={offset})") from last_error
 
 
-def fetch_all_rows(last_run: Optional[str]) -> List[dict]:
+def fetch_all_rows(last_run: Optional[str], max_rows: Optional[int] = None) -> List[dict]:
     offset = 0
     collected: List[dict] = []
     mode = "delta" if last_run else "full"
-    print(f"Recuperation Wikidata ({mode})...")
+    limite_txt = f", max {max_rows} lignes" if max_rows else ""
+    print(f"Recuperation Wikidata ({mode}{limite_txt})...")
 
     while True:
-        batch = fetch_batch(PAGE_SIZE, offset, last_run)
+        batch_size = PAGE_SIZE
+        if max_rows is not None:
+            remaining = max_rows - len(collected)
+            if remaining <= 0:
+                break
+            batch_size = min(PAGE_SIZE, remaining)
+
+        batch = fetch_batch(batch_size, offset, last_run)
         if not batch:
             break
 
@@ -194,9 +202,14 @@ def fetch_all_rows(last_run: Optional[str]) -> List[dict]:
                     "wikidata_modified": wikidata_modified,
                 }
             )
+            if max_rows is not None and len(collected) >= max_rows:
+                break
 
-        offset += PAGE_SIZE
-        if len(batch) < PAGE_SIZE:
+        if max_rows is not None and len(collected) >= max_rows:
+            break
+
+        offset += batch_size
+        if len(batch) < batch_size:
             break
         time.sleep(BATCH_SLEEP_SECONDS)
 
@@ -204,7 +217,7 @@ def fetch_all_rows(last_run: Optional[str]) -> List[dict]:
 
 
 def normalize_pair(row: dict) -> dict:
-    """Tri lexicographique des IDs pour cle unique stable (A,B)."""
+    """Tri lexicographique des IDs — symetrie P190 (A-B == B-A, cle unique)."""
     id_a, id_b = row["ville_A_id"], row["ville_B_id"]
     if id_a <= id_b:
         return row
@@ -319,25 +332,39 @@ def write_metadata(
         json.dump(metadata, json_file, ensure_ascii=False, indent=2)
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Sync Wikidata P190 -> CSV + graphe JSON")
-    parser.add_argument(
-        "--full",
-        action="store_true",
-        help="Ignore last_run et force une synchronisation complete",
-    )
-    args = parser.parse_args()
-
+def run_sync(
+    *,
+    full: bool = False,
+    limit: Optional[int] = None,
+    replace: bool = False,
+    sync_mode: Optional[str] = None,
+) -> int:
+    """Lance la synchronisation. Retourne 0 si rien n'a change, 1 sinon."""
     metadata = load_metadata()
-    last_run = None if args.full else get_last_run(metadata)
-    sync_mode = "full" if last_run is None else "delta"
+    last_run = None if full else get_last_run(metadata)
 
-    rows = fetch_all_rows(last_run)
+    if sync_mode is None:
+        if limit is not None:
+            sync_mode = "sample"
+        elif last_run is None:
+            sync_mode = "full"
+        else:
+            sync_mode = "delta"
+
+    rows = fetch_all_rows(last_run, max_rows=limit)
     incoming_df = rows_to_dataframe(rows)
-    existing_df = load_existing_csv()
 
+    if not len(incoming_df) and sync_mode != "delta":
+        print("Aucune donnee recuperee.")
+        return 0
+
+    existing_df = load_existing_csv()
     csv_hash_before = file_hash(CSV_PATH)
-    merged_df = upsert_csv(existing_df, incoming_df)
+
+    if replace:
+        merged_df = incoming_df.copy()
+    else:
+        merged_df = upsert_csv(existing_df, incoming_df)
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     merged_df.to_csv(CSV_PATH, index=False)
@@ -370,6 +397,29 @@ def main() -> int:
     print(f"Metadata: {METADATA_PATH}")
 
     return 1 if csv_changed or graph_changed else 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Sync Wikidata P190 -> CSV + graphe JSON")
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Ignore last_run et force une synchronisation complete",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Nombre max de jumelages a telecharger (1 requete SPARQL si petit)",
+    )
+    parser.add_argument(
+        "--replace",
+        action="store_true",
+        help="Remplace le CSV au lieu de fusionner (upsert)",
+    )
+    args = parser.parse_args()
+
+    return run_sync(full=args.full, limit=args.limit, replace=args.replace)
 
 
 if __name__ == "__main__":

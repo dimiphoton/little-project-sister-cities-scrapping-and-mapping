@@ -1,0 +1,46 @@
+{
+  "kpis": {
+    "city_count": 3,
+    "link_count": 2,
+    "country_count": 2,
+    "directed_link_count": 4
+  },
+  "top_cities": [
+    {
+      "id": "Q90",
+      "n": "Paris",
+      "degree": 2
+    },
+    {
+      "id": "Q456",
+      "n": "Lyon",
+      "degree": 1
+    },
+    {
+      "id": "Q84",
+      "n": "London",
+      "degree": 1
+    }
+  ],
+  "country_chord": {
+    "labels": [
+      "FR",
+      "GB"
+    ],
+    "matrix": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ]
+    ]
+  },
+  "continent_distribution": {
+    "Europe": 3
+  },
+  "avg_arc_km": 367.6,
+  "arcs_with_distance": 2
+}
