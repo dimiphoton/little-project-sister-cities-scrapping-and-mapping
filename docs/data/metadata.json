@@ -1,0 +1,12 @@
+{
+  "last_run": "2026-06-13T13:25:16+00:00",
+  "generated_at": "2026-06-13T13:25:16+00:00",
+  "source": "Wikidata P190",
+  "endpoint": "https://query.wikidata.org/sparql",
+  "sync_mode": "test",
+  "rows_fetched": 2,
+  "rows_total": 2,
+  "csv_changed": true,
+  "graph_changed": true,
+  "user_agent": "little-project-sister-cities-scrapping-and-mapping/0.2 (https://github.com/dimiphoton/little-project-sister-cities-scrapping-and-mapping; mailto:dimiphoton@users.noreply.github.com)"
+}

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sister Cities — World Twin Towns Map</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="https://unpkg.com/deck.gl@9.0.35/dist.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>Sister Cities</h1>
+      <p>Explore city twinning partnerships around the world</p>
+    </header>
+
+    <section class="hero" id="hero-kpis">
+      <div class="kpi">
+        <div class="value" id="kpi-cities">—</div>
+        <div class="label">Cities</div>
+      </div>
+      <div class="kpi">
+        <div class="value" id="kpi-links">—</div>
+        <div class="label">Twin links</div>
+      </div>
+      <div class="kpi">
+        <div class="value" id="kpi-countries">—</div>
+        <div class="label">Countries</div>
+      </div>
+      <div class="kpi">
+        <div class="value" id="last-updated">—</div>
+        <div class="label">Last updated</div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div class="search-wrap">
+        <input type="search" id="search-input" placeholder="Search city…" autocomplete="off" />
+        <div class="search-results" id="search-results"></div>
+      </div>
+      <select id="country-filter" aria-label="Filter by country">
+        <option value="">All countries</option>
+      </select>
+      <select id="continent-filter" aria-label="Filter by continent">
+        <option value="">All continents</option>
+      </select>
+      <label class="toggle-arcs">
+        <input type="checkbox" id="show-arcs" />
+        Show twin arcs
+      </label>
+      <button type="button" class="secondary" id="reset-btn">Reset</button>
+    </section>
+
+    <div class="main-grid">
+      <div id="map" role="img" aria-label="Interactive map of twinned cities"></div>
+      <aside class="panel">
+        <h2 id="panel-title">Select a city</h2>
+        <p class="hint" id="panel-hint">Search, pick a city below, or click a point on the map.</p>
+        <ul class="city-pick-list" id="city-pick-list"></ul>
+        <ul class="twin-list" id="twin-list"></ul>
+      </aside>
+    </div>
+
+    <section class="charts">
+      <div class="chart-box">
+        <h3>Top twinned cities</h3>
+        <div id="chart-top"></div>
+      </div>
+      <div class="chart-box">
+        <h3>Country-to-country links</h3>
+        <div id="chart-chord"></div>
+      </div>
+    </section>
+
+    <footer>
+      <span id="footer-source">Source: Wikidata P190</span>
+    </footer>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
