@@ -1,0 +1,45 @@
+---
+description: Contraintes projet Sister Cities — week-end, Python data, site statique
+alwaysApply: true
+---
+
+# Sister Cities — règles projet
+
+## Langue et style
+
+- Répondre en **français**.
+- Code **simple et lisible** : fonctions et scripts linéaires ; pas de classes ni d’abstraction inutiles.
+- Python : pandas OK, type hints légers, PEP 8 / compatible Ruff.
+- Commentaires seulement si la logique métier n’est pas évidente.
+
+## Architecture (ne pas inventer une autre)
+
+- Données : Wikidata P190 → `data/processed/jumelages.csv` (source de vérité).
+- Pipeline : `scripts/sync_wikidata.py`, `build_stats.py`, `copy_docs_data.py`.
+- Site statique : `docs/` (Deck.gl + D3), pas de backend.
+- Vision et critères v1 : lire `OBJECTIF.md` si doute d’architecture.
+- Tâche du jour : lire `SESSION.md` en priorité ; une seule tâche par session.
+- Ordre des phases : respecter `PLAN.md` ; signaler si la demande déborde sur une autre phase.
+
+## Discipline de travail
+
+- **Ne pas commit** sauf demande explicite de l’utilisateur.
+- **Ne pas push** sauf demande explicite.
+- Pas de refonte globale ni de réécriture massive si une petite correction suffit.
+- Minimiser le scope : ne pas toucher aux fichiers hors tâche courante.
+
+## Tests locaux usuels
+
+```bash
+python scripts/sync_sample.py
+python scripts/build_stats.py
+python scripts/copy_docs_data.py
+cd docs && python -m http.server 8000
+```
+
+## Hors scope v1 (sauf demande explicite)
+
+- Compare deux zones sur la carte
+- UI multilingue FR
+- pytest / suite de tests
+- Export API REST
