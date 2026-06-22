@@ -106,6 +106,61 @@ header p {
   border: 1px solid var(--border);
 }
 
+.toggle-arcs {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-arcs input {
+  width: auto;
+  cursor: pointer;
+}
+
+.city-pick-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.city-pick-list button {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.city-pick-list button:hover,
+.city-pick-list button.active {
+  border-color: var(--accent);
+  background: rgba(88, 166, 255, 0.15);
+}
+
+.twin-list li button {
+  font: inherit;
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.twin-list li button:hover {
+  text-decoration: underline;
+}
+
 .search-wrap {
   position: relative;
 }

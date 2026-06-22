@@ -22,6 +22,7 @@ let state = {
   selectedCityId: null,
   countryFilter: "",
   continentFilter: "",
+  showArcs: false,
   deck: null,
 };
 
@@ -49,8 +50,15 @@ function getVisibleNodeIds() {
   return ids;
 }
 
+function getVisibleCities() {
+  const visible = getVisibleNodeIds();
+  return state.data.graph.nodes
+    .filter((n) => visible.has(n.id))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 function buildArcData() {
-  if (!state.selectedCityId) return [];
+  if (!state.showArcs || !state.selectedCityId) return [];
 
   const neighbors = state.adjacency.get(state.selectedCityId) || new Set();
   const arcs = [];
@@ -94,11 +102,14 @@ function buildLayers() {
     minZoom: 0,
     maxZoom: 19,
     tileSize: 256,
+    pickable: false,
     renderSubLayers: (props) => {
       const {
         bbox: { west, south, east, north },
       } = props.tile;
       return new BitmapLayer(props, {
+        id: `${props.id}-bitmap`,
+        pickable: false,
         data: null,
         image: props.data,
         bounds: [west, south, east, north],
@@ -106,27 +117,25 @@ function buildLayers() {
     },
   });
 
-  const scatter = buildScatterData();
   const scatterLayer = new ScatterplotLayer({
     id: "cities",
-    data: scatter,
+    data: buildScatterData(),
     pickable: true,
-    opacity: 0.9,
+    autoHighlight: true,
+    highlightColor: [240, 136, 62, 200],
+    opacity: 0.95,
     stroked: true,
     filled: true,
-    radiusScale: 40,
-    radiusMinPixels: 5,
-    radiusMaxPixels: 14,
-    lineWidthMinPixels: 1,
+    radiusScale: 60,
+    radiusMinPixels: 10,
+    radiusMaxPixels: 22,
+    lineWidthMinPixels: 2,
     getPosition: (d) => d.position,
     getFillColor: (d) => {
       if (d.selected) return [240, 136, 62, 255];
-      return [...getCountryColor(d.country), 220];
+      return [...getCountryColor(d.country), 230];
     },
-    getLineColor: [255, 255, 255, 120],
-    onClick: ({ object }) => {
-      if (object) selectCity(object.id);
-    },
+    getLineColor: [255, 255, 255, 180],
   });
 
   const layers = [tileLayer, scatterLayer];
@@ -138,7 +147,7 @@ function buildLayers() {
         id: "twins",
         data: arcData,
         pickable: false,
-        getWidth: 2,
+        getWidth: 3,
         getSourcePosition: (d) => d.source,
         getTargetPosition: (d) => d.target,
         getSourceColor: (d) => d.sourceColor,
@@ -155,14 +164,33 @@ function updateMapView() {
   state.deck.setProps({ layers: buildLayers() });
 }
 
+function renderCityPickList() {
+  const listEl = document.getElementById("city-pick-list");
+  const cities = getVisibleCities();
+
+  listEl.innerHTML = cities
+    .map((city) => {
+      const flag = countryFlag(city.country, state.data.countries);
+      const activeClass = city.id === state.selectedCityId ? "active" : "";
+      return `<li><button type="button" class="${activeClass}" data-id="${city.id}">${flag} ${city.name}</button></li>`;
+    })
+    .join("");
+
+  listEl.querySelectorAll("button[data-id]").forEach((btn) => {
+    btn.addEventListener("click", () => selectCity(btn.dataset.id));
+  });
+}
+
 function renderPanel() {
   const titleEl = document.getElementById("panel-title");
   const listEl = document.getElementById("twin-list");
   const hintEl = document.getElementById("panel-hint");
 
+  renderCityPickList();
+
   if (!state.selectedCityId) {
     titleEl.textContent = "Select a city";
-    hintEl.textContent = "Search or click a point on the map to see twin cities.";
+    hintEl.textContent = "Pick a city above, search, or click on the map.";
     listEl.innerHTML = "";
     return;
   }
@@ -174,7 +202,8 @@ function renderPanel() {
   titleEl.textContent = `${flag} ${city.name}`;
   const neighbors = [...(state.adjacency.get(state.selectedCityId) || [])];
 
-  hintEl.textContent = `${neighbors.length} twin ${neighbors.length === 1 ? "city" : "cities"}`;
+  const arcHint = state.showArcs ? "Arcs visible on map." : "Enable “Show twin arcs” to draw links.";
+  hintEl.textContent = `${neighbors.length} twin ${neighbors.length === 1 ? "city" : "cities"}. ${arcHint}`;
 
   const items = neighbors
     .map((id) => state.nodeMap.get(id))
@@ -188,13 +217,20 @@ function renderPanel() {
       if (city.lon != null && twin.lon != null) {
         dist = formatKm(haversineKm(city.lon, city.lat, twin.lon, twin.lat));
       }
-      return `<li><strong>${tf} ${twin.name}</strong> <span style="color:#8b949e">${dist}</span></li>`;
+      return `<li><button type="button" data-id="${twin.id}">${tf} ${twin.name}</button> <span style="color:#8b949e">${dist}</span></li>`;
     })
     .join("");
+
+  listEl.querySelectorAll("button[data-id]").forEach((btn) => {
+    btn.addEventListener("click", () => selectCity(btn.dataset.id));
+  });
 }
 
 function selectCity(cityId) {
+  if (!state.nodeMap.has(cityId)) return;
+
   state.selectedCityId = cityId;
+  document.getElementById("search-input").value = state.nodeMap.get(cityId)?.name || "";
   updateMapView();
   renderPanel();
 
@@ -204,7 +240,7 @@ function selectCity(cityId) {
       initialViewState: {
         longitude: city.lon,
         latitude: city.lat,
-        zoom: 4,
+        zoom: 5,
         pitch: 0,
         bearing: 0,
       },
@@ -221,9 +257,11 @@ function resetView() {
   state.selectedCityId = null;
   state.countryFilter = "";
   state.continentFilter = "";
+  state.showArcs = false;
   document.getElementById("country-filter").value = "";
   document.getElementById("continent-filter").value = "";
   document.getElementById("search-input").value = "";
+  document.getElementById("show-arcs").checked = false;
   updateMapView();
   renderPanel();
 
@@ -261,7 +299,6 @@ function setupSearch() {
     if (!btn) return;
     selectCity(btn.dataset.id);
     results.classList.remove("visible");
-    input.value = state.nodeMap.get(btn.dataset.id)?.name || "";
   });
 
   document.addEventListener("click", (e) => {
@@ -275,8 +312,7 @@ function setupFilters() {
   const countrySelect = document.getElementById("country-filter");
   const continentSelect = document.getElementById("continent-filter");
 
-  const countryCodes = Object.keys(state.data.countries).sort();
-  for (const cc of countryCodes) {
+  for (const cc of Object.keys(state.data.countries).sort()) {
     const opt = document.createElement("option");
     opt.value = cc;
     opt.textContent = `${state.data.countries[cc].flag || ""} ${cc}`;
@@ -296,14 +332,28 @@ function setupFilters() {
   countrySelect.addEventListener("change", () => {
     state.countryFilter = countrySelect.value;
     updateMapView();
+    renderPanel();
   });
 
   continentSelect.addEventListener("change", () => {
     state.continentFilter = continentSelect.value;
     updateMapView();
+    renderPanel();
+  });
+
+  document.getElementById("show-arcs").addEventListener("change", (e) => {
+    state.showArcs = e.target.checked;
+    updateMapView();
+    renderPanel();
   });
 
   document.getElementById("reset-btn").addEventListener("click", resetView);
+}
+
+function handleMapClick(info) {
+  if (info?.object?.id) {
+    selectCity(info.object.id);
+  }
 }
 
 function initDeck() {
@@ -311,6 +361,8 @@ function initDeck() {
     parent: document.getElementById("map"),
     initialViewState: { longitude: 2, latitude: 46, zoom: 2.5, pitch: 0, bearing: 0 },
     controller: true,
+    getCursor: ({ isHovering }) => (isHovering ? "pointer" : "grab"),
+    onClick: handleMapClick,
     layers: buildLayers(),
   });
 }
@@ -331,6 +383,7 @@ async function main() {
     setupSearch();
     setupFilters();
     initDeck();
+    renderPanel();
 
     const params = new URLSearchParams(window.location.search);
     const cityParam = params.get("city");

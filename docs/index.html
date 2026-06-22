@@ -44,6 +44,10 @@
       <select id="continent-filter" aria-label="Filter by continent">
         <option value="">All continents</option>
       </select>
+      <label class="toggle-arcs">
+        <input type="checkbox" id="show-arcs" />
+        Show twin arcs
+      </label>
       <button type="button" class="secondary" id="reset-btn">Reset</button>
     </section>
 
@@ -51,7 +55,8 @@
       <div id="map" role="img" aria-label="Interactive map of twinned cities"></div>
       <aside class="panel">
         <h2 id="panel-title">Select a city</h2>
-        <p class="hint" id="panel-hint">Search or click a point on the map to see twin cities.</p>
+        <p class="hint" id="panel-hint">Search, pick a city below, or click a point on the map.</p>
+        <ul class="city-pick-list" id="city-pick-list"></ul>
         <ul class="twin-list" id="twin-list"></ul>
       </aside>
     </div>

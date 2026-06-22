@@ -2,6 +2,13 @@
 
 Weekend project: visualize city twinning (jumelage) from Wikidata.
 
+## Documentation projet
+
+| Document | Contenu |
+|----------|---------|
+| [OBJECTIF.md](OBJECTIF.md) | But final, architecture cible, livrables v1 |
+| [HISTORIQUE_ET_TODO.md](HISTORIQUE_ET_TODO.md) | Chronologie des actions, blocages, checklist |
+
 ## Architecture data
 
 | File | Role |
